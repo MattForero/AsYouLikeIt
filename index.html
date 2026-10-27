@@ -87,6 +87,7 @@ input, select { font: inherit; color: var(--ink); }
 .offline-dlg .hint { color: var(--soft); font-size: .92rem; margin: 12px 0 0; }
 .offline-dlg .close { position: absolute; top: 12px; right: 14px; font-weight: 700; color: var(--soft); padding: 6px 8px; }
 .offline-dlg .btn { margin-top: 14px; }
+.install-top { float: right; margin: 4px 0 8px 14px; min-height: 40px; padding: 0 14px; font-size: .95rem; border-width: 1.5px; }
 
 /* buttons */
 .btn { min-height: 48px; padding: 0 22px; border-radius: 4px; font-weight: 700; border: 2px solid var(--ink); background: transparent; }
@@ -635,6 +636,7 @@ function home() {
   R = null; go(''); if (typeof checkMore === 'function') checkMore();
   app.innerHTML = `<div class="page home">
     <header>
+      ${CAN_INSTALL ? '<button class="btn install-top" type="button" id="install-top">Install</button>' : ''}
       <h1>As You Like It<br><i>notebook</i></h1>
       <p class="lede">Do each lesson <b>before</b> you read its act: first “Before you read”, then the Act 1 lesson before you read Act 1, and so on. The vocabulary has the words from the lessons and many more.</p>
       <p class="lede">I built these lessons to help you understand the text a lot better, learn the vocabulary and reflect on some important topics. Please go through them carefully :)</p>
@@ -650,7 +652,7 @@ function home() {
         <button class="btn go wide" id="open-dict">Open the vocabulary</button>
       </section>
       ${CAN_INSTALL ? `<section class="part vocab-entry"><h2>Offline</h2>
-        <p>Keep the notebook on your iPad or computer and use it without internet.</p>
+        <p>Keep the notebook on your phone, iPad or computer and use it without internet.</p>
         <button class="btn wide" id="offline">Download to use offline</button>
       </section>` : ''}
       </div>
@@ -660,7 +662,7 @@ function home() {
   </div>`;
   app.querySelectorAll('.lesson-row').forEach(b => b.onclick = () => signIn(LESSONS[+b.dataset.l]));
   document.getElementById('open-dict').onclick = () => dictionary();
-  if (CAN_INSTALL) document.getElementById('offline').onclick = offlineHelp;
+  if (CAN_INSTALL) document.getElementById('offline').onclick = document.getElementById('install-top').onclick = offlineHelp;
   if (REGISTER) document.getElementById('not-me').onclick = () => { student = { email: '' }; store.set('ayli-user', student); gate(); };
   window.scrollTo(0, 0);
 }
@@ -1055,12 +1057,12 @@ const CAN_INSTALL = !!document.querySelector('meta[name="ayli-pwa"]') && !matchM
 let installEv = null;   // Chrome and Edge (Android, computers) can install with one button
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEv = e; });
 const OFFLINE_TABS = [
-  { key: 'ipad', label: 'On iPad', steps: [
+  { key: 'ipad', label: 'On iPhone / iPad', steps: [
     'Open this page in <b>Safari</b>, with internet.',
-    'Tap the <b>Share</b> button (a square with an arrow ↑) at the top.',
-    'Choose <b>Add to Home Screen</b>, then <b>Add</b>.',
+    'Tap the <b>Share</b> button (a square with an arrow ↑): at the top on iPad, at the bottom on iPhone. Don\'t see it? Tap <b>⋯</b> first.',
+    'Scroll down and choose <b>Add to Home Screen</b>. Leave <b>Open as Web App</b> on and tap <b>Add</b>.',
     'Open the notebook <b>from its icon</b> once while you still have internet. After that it works without internet.',
-  ], hint: 'In Chrome: tap the share icon in the address bar, then Add to Home Screen. Your lesson scores in the app start fresh: they are kept apart from Safari.' },
+  ], hint: 'Opened the link inside another app (WhatsApp, Classroom, Instagram…)? Open it in Safari first: tap ⋯ or the compass, then Open in Safari. Chrome on iPhone also works: share icon in the address bar → Add to Home Screen. Your lesson scores in the app start fresh: they are kept apart from Safari.' },
   { key: 'android', label: 'On Android', steps: [
     'Open this page in <b>Chrome</b>, with internet.',
     'Tap the menu <b>⋮</b> (top right).',
@@ -1077,6 +1079,7 @@ const OFFLINE_TABS = [
 function offlineHelp() {
   const ua = navigator.userAgent;
   const first = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? 'ipad' : /Android/.test(ua) ? 'android' : 'pc';
+  const opener = document.activeElement;
   const dlg = document.createElement('dialog');
   dlg.className = 'offline-dlg'; dlg.setAttribute('aria-labelledby', 'off-t');
   dlg.innerHTML = `<button class="close" type="button">Close ✕</button>
@@ -1096,7 +1099,7 @@ function offlineHelp() {
   dlg.querySelector('.cast-tabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); };
   dlg.querySelector('.close').onclick = () => dlg.close();
   dlg.onclick = e => { if (e.target === dlg) dlg.close(); };   // tap outside
-  dlg.onclose = () => { dlg.remove(); document.getElementById('offline')?.focus(); };
+  dlg.onclose = () => { dlg.remove(); opener?.focus?.(); };
   document.body.appendChild(dlg); show(first); dlg.showModal();
 }
 
